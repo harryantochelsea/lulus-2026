@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Pengumuman Kelulusan SMP Islam Sudirman Juwangi</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body{
+      margin:0;
+      padding:0;
+      min-height:100vh;
+      background: linear-gradient(135deg,#0f172a,#1e293b);
+      font-family: Arial, sans-serif;
+    }
+
+    .glass{
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+
+    .fade{
+      animation: fade .5s ease;
+    }
+
+    @keyframes fade{
+      from{
+        opacity:0;
+        transform:translateY(10px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body class="flex items-center justify-center p-4 text-white">
+
+  <div class="glass w-full max-w-3xl rounded-3xl p-8 shadow-2xl">
+
+    <!-- HEADER -->
+    <div class="text-center mb-8">
+
+      <h1 class="text-4xl md:text-6xl font-bold">
+        PENGUMUMAN KELULUSAN
+      </h1>
+
+      <h2 class="text-2xl md:text-4xl text-yellow-300 font-bold mt-5">
+        SMP ISLAM SUDIRMAN JUWANGI
+      </h2>
+
+      <p class="text-gray-300 text-xl mt-4">
+        Tahun Pelajaran 2025/2026
+      </p>
+
+    </div>
+
+    <!-- INPUT -->
+    <div>
+
+      <label class="block mb-3 text-xl">
+        Masukkan NISN
+      </label>
+
+      <div class="flex gap-3">
+
+        <input
+          type="text"
+          id="nisn"
+          placeholder="Masukkan NISN"
+          class="w-full px-5 py-4 rounded-2xl text-black text-xl focus:outline-none"
+        >
+
+        <button
+          onclick="cekKelulusan()"
+          class="bg-green-500 hover:bg-green-600 px-8 py-4 rounded-2xl font-bold text-xl"
+        >
+          CEK
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- HASIL -->
+    <div
+      id="hasil"
+      class="hidden fade mt-8 bg-white rounded-3xl p-8 text-black"
+    >
+
+      <div class="text-center">
+
+        <div class="text-green-600 text-6xl mb-3">
+          ✔
+        </div>
+
+        <h3 class="text-5xl font-bold text-green-600">
+          SELAMAT
+        </h3>
+
+        <p class="text-gray-500 text-2xl mt-2">
+          Anda dinyatakan
+        </p>
+
+        <div
+          id="status"
+          class="text-6xl font-bold text-green-700 mt-4"
+        >
+          LULUS
+        </div>
+
+      </div>
+
+      <!-- DATA -->
+      <div class="mt-10 space-y-5">
+
+        <div class="flex justify-between border-b pb-3 text-xl">
+          <span class="font-bold">Nama</span>
+          <span id="nama"></span>
+        </div>
+
+        <div class="flex justify-between border-b pb-3 text-xl">
+          <span class="font-bold">NISN</span>
+          <span id="nisnHasil"></span>
+        </div>
+
+        <div class="flex justify-between border-b pb-3 text-xl">
+          <span class="font-bold">Kelas</span>
+          <span id="kelas"></span>
+        </div>
+
+        <div class="flex justify-between border-b pb-3 text-xl">
+          <span class="font-bold">Status</span>
+          <span id="statusKecil"></span>
+        </div>
+
+      </div>
+
+      <!-- DOWNLOAD -->
+      <div class="text-center mt-10">
+
+        <a
+          id="downloadBtn"
+          href="#"
+          target="_blank"
+          class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-2xl px-8 py-4 rounded-2xl font-bold shadow-lg"
+        >
+          ⬇ Download SKL
+        </a>
+
+      </div>
+
+    </div>
+
+    <!-- DATA TIDAK DITEMUKAN -->
+    <div
+      id="notfound"
+      class="hidden mt-8 bg-red-500/20 border border-red-500 rounded-2xl p-5 text-center text-xl"
+    >
+      Data tidak ditemukan.
+    </div>
+
+  </div>
+
+  <script>
+
+    // CSV GOOGLE SHEET
+    const csvUrl =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTNK2AexV5RQ77JeqE7ycdaoILWUcQhu_a9Tnj3k1BbxzfpRFmgFc721-3jvJmePBRyEQUKs3-EVSsh/pub?output=csv";
+
+    let dataSiswa = [];
+
+    // LOAD DATA
+    async function loadData(){
+
+      try{
+
+        const response = await fetch(csvUrl);
+        const text = await response.text();
+
+        const rows = text.trim().split("\n");
+
+        // HEADER
+        const headers = rows[0]
+          .split(",")
+          .map(h => h.replace(/"/g,"").trim());
+
+        // DATA
+        dataSiswa = rows.slice(1).map(row => {
+
+          const values =
+            row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+
+          let obj = {};
+
+          headers.forEach((header,i)=>{
+
+            obj[header] = values[i]
+              ? values[i].replace(/"/g,"").trim()
+              : "";
+
+          });
+
+          return obj;
+
+        });
+
+      }catch(error){
+
+        alert("Gagal mengambil data spreadsheet");
+
+        console.log(error);
+
+      }
+
+    }
+
+    // CONVERT LINK GOOGLE DRIVE
+    function convertDriveLink(url){
+
+      if(!url) return "#";
+
+      // AMBIL FILE ID
+      const regex = /[-\w]{25,}/;
+      const fileId = url.match(regex);
+
+      if(fileId){
+
+        // DIRECT DOWNLOAD
+        return `https://drive.google.com/uc?export=download&id=${fileId[0]}`;
+
+      }
+
+      return url;
+
+    }
+
+    // CEK KELULUSAN
+    async function cekKelulusan(){
+
+      // LOAD DATA PERTAMA KALI
+      if(dataSiswa.length === 0){
+
+        await loadData();
+
+      }
+
+      const nisnInput =
+        document.getElementById("nisn")
+        .value
+        .trim();
+
+      // CARI DATA
+      const siswa = dataSiswa.find(
+        s => s.NISN === nisnInput
+      );
+
+      // RESET
+      document.getElementById("hasil")
+        .classList.add("hidden");
+
+      document.getElementById("notfound")
+        .classList.add("hidden");
+
+      // JIKA DITEMUKAN
+      if(siswa){
+
+        document.getElementById("hasil")
+          .classList.remove("hidden");
+
+        // NAMA
+        document.getElementById("nama").innerText =
+          siswa.NAMA || "-";
+
+        // NISN
+        document.getElementById("nisnHasil").innerText =
+          siswa.NISN || "-";
+
+        // KELAS
+        document.getElementById("kelas").innerText =
+          siswa.KELAS || "-";
+
+        // STATUS
+        document.getElementById("status").innerText =
+          siswa.STATUS || "LULUS";
+
+        document.getElementById("statusKecil").innerText =
+          siswa.STATUS || "LULUS";
+
+        // LINK SKL
+        const sklLink =
+          convertDriveLink(siswa.SKL);
+
+        document.getElementById("downloadBtn")
+          .href = sklLink;
+
+      }else{
+
+        document.getElementById("notfound")
+          .classList.remove("hidden");
+
+      }
+
+    }
+
+  </script>
+
+</body>
+</html>
